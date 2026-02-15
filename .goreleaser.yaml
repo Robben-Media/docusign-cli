@@ -1,0 +1,49 @@
+version: 2
+
+project_name: placeholder-cli
+
+changelog:
+  disable: true
+
+builds:
+  - id: placeholder
+    main: ./cmd/placeholder
+    binary: placeholder-cli
+    ldflags: >-
+      -s -w
+      -X github.com/builtbyrobben/cli-template/internal/cmd.version={{ .Tag }}
+      -X github.com/builtbyrobben/cli-template/internal/cmd.commit={{ .ShortCommit }}
+      -X github.com/builtbyrobben/cli-template/internal/cmd.date={{ .Date }}
+    env:
+      - CGO_ENABLED=0
+    targets:
+      - linux_amd64
+      - linux_arm64
+      - windows_amd64
+      - windows_arm64
+  - id: placeholder_darwin
+    main: ./cmd/placeholder
+    binary: placeholder-cli
+    ldflags: >-
+      -s -w
+      -X github.com/builtbyrobben/cli-template/internal/cmd.version={{ .Tag }}
+      -X github.com/builtbyrobben/cli-template/internal/cmd.commit={{ .ShortCommit }}
+      -X github.com/builtbyrobben/cli-template/internal/cmd.date={{ .Date }}
+    env:
+      - CGO_ENABLED=1
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+
+archives:
+  - builds:
+      - placeholder
+      - placeholder_darwin
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: checksums.txt

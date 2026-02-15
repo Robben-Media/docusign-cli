@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run fmt-check
+        run: make fmt-check
+
+      - name: Run lint
+        run: make lint
+
+      - name: Run tests
+        run: make test
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Build (CGO enabled for keyring)
+        run: CGO_ENABLED=1 go build -o bin/placeholder-cli ./cmd/placeholder
+
+      - name: Test keyring
+        run: |
+          echo "testkey" | ./bin/placeholder-cli auth set-key --stdin
+          ./bin/placeholder-cli auth status
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build -o bin/placeholder-cli.exe ./cmd/placeholder
+
+      - name: Test keyring
+        run: |
+          "testkey" | .\bin\placeholder-cli.exe auth set-key --stdin
+          .\bin\placeholder-cli.exe auth status
