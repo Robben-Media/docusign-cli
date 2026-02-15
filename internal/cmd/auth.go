@@ -104,6 +104,12 @@ func (cmd *AuthLoginCmd) Run(ctx context.Context) error {
 			"base_uri":   account.BaseURI,
 		})
 	}
+	if outfmt.IsPlain(ctx) {
+		return outfmt.WritePlain(os.Stdout,
+			[]string{"STATUS", "ACCOUNT_ID", "BASE_URI"},
+			[][]string{{"success", account.AccountID, account.BaseURI}},
+		)
+	}
 
 	fmt.Fprintln(os.Stderr, "Login successful!")
 	fmt.Fprintf(os.Stderr, "Account ID: %s\n", account.AccountID)
@@ -192,6 +198,12 @@ func (cmd *AuthSetCredentialsCmd) Run(ctx context.Context) error {
 			"message": "Credentials stored in keyring",
 		})
 	}
+	if outfmt.IsPlain(ctx) {
+		return outfmt.WritePlain(os.Stdout,
+			[]string{"STATUS", "MESSAGE"},
+			[][]string{{"success", "Credentials stored in keyring"}},
+		)
+	}
 
 	fmt.Fprintln(os.Stderr, "Credentials stored in keyring")
 
@@ -238,19 +250,37 @@ func (cmd *AuthStatusCmd) Run(ctx context.Context) error {
 	if outfmt.IsJSON(ctx) {
 		return outfmt.WriteJSON(os.Stdout, status)
 	}
+	if outfmt.IsPlain(ctx) {
+		acctID := ""
+		if v, ok := status["account_id"].(string); ok {
+			acctID = v
+		}
+		tokenStatus := "none"
+		if hasTokens {
+			if tokens.IsExpired() {
+				tokenStatus = "expired"
+			} else {
+				tokenStatus = "valid"
+			}
+		}
+		return outfmt.WritePlain(os.Stdout,
+			[]string{"HAS_INTEGRATION_KEY", "HAS_SECRET_KEY", "ACCOUNT_ID", "TOKENS"},
+			[][]string{{fmt.Sprintf("%v", hasIK || envIK), fmt.Sprintf("%v", hasSK || envSK), acctID, tokenStatus}},
+		)
+	}
 
-	fmt.Fprintln(os.Stderr, "DocuSign CLI Auth Status")
-	fmt.Fprintln(os.Stderr, "------------------------")
+	fmt.Fprintln(os.Stdout, "DocuSign CLI Auth Status")
+	fmt.Fprintln(os.Stdout, "------------------------")
 
 	printIntegrationKeyStatus(envIK, hasIK)
 	printSecretKeyStatus(envSK, hasSK)
 
 	if hasAcct {
 		if acctID, ok := status["account_id"].(string); ok {
-			fmt.Fprintf(os.Stderr, "Account ID:      %s\n", acctID)
+			fmt.Fprintf(os.Stdout, "Account ID:      %s\n", acctID)
 		}
 	} else {
-		fmt.Fprintln(os.Stderr, "Account ID:      Not set")
+		fmt.Fprintln(os.Stdout, "Account ID:      Not set")
 	}
 
 	printTokenStatus(hasTokens, tokens, status)
@@ -261,35 +291,35 @@ func (cmd *AuthStatusCmd) Run(ctx context.Context) error {
 func printIntegrationKeyStatus(envIK, hasIK bool) {
 	switch {
 	case envIK:
-		fmt.Fprintln(os.Stderr, "Integration Key: Set via DOCUSIGN_INTEGRATION_KEY")
+		fmt.Fprintln(os.Stdout, "Integration Key: Set via DOCUSIGN_INTEGRATION_KEY")
 	case hasIK:
-		fmt.Fprintln(os.Stderr, "Integration Key: Stored in keyring")
+		fmt.Fprintln(os.Stdout, "Integration Key: Stored in keyring")
 	default:
-		fmt.Fprintln(os.Stderr, "Integration Key: Not set")
+		fmt.Fprintln(os.Stdout, "Integration Key: Not set")
 	}
 }
 
 func printSecretKeyStatus(envSK, hasSK bool) {
 	switch {
 	case envSK:
-		fmt.Fprintln(os.Stderr, "Secret Key:      Set via DOCUSIGN_SECRET_KEY")
+		fmt.Fprintln(os.Stdout, "Secret Key:      Set via DOCUSIGN_SECRET_KEY")
 	case hasSK:
-		fmt.Fprintln(os.Stderr, "Secret Key:      Stored in keyring")
+		fmt.Fprintln(os.Stdout, "Secret Key:      Stored in keyring")
 	default:
-		fmt.Fprintln(os.Stderr, "Secret Key:      Not set")
+		fmt.Fprintln(os.Stdout, "Secret Key:      Not set")
 	}
 }
 
 func printTokenStatus(hasTokens bool, tokens *docusign.TokenData, status map[string]any) {
 	if hasTokens {
 		if tokens.IsExpired() {
-			fmt.Fprintln(os.Stderr, "Tokens:          Expired (will auto-refresh)")
+			fmt.Fprintln(os.Stdout, "Tokens:          Expired (will auto-refresh)")
 		} else {
-			fmt.Fprintln(os.Stderr, "Tokens:          Valid")
+			fmt.Fprintln(os.Stdout, "Tokens:          Valid")
 		}
 
 		if redacted, ok := status["access_token_redacted"].(string); ok {
-			fmt.Fprintf(os.Stderr, "Access Token:    %s\n", redacted)
+			fmt.Fprintf(os.Stdout, "Access Token:    %s\n", redacted)
 		}
 	} else {
 		fmt.Fprintln(os.Stderr, "Tokens:          Not found (run: docusign-cli auth login)")
@@ -310,6 +340,12 @@ func (cmd *AuthRemoveCmd) Run(ctx context.Context) error {
 			"status":  "success",
 			"message": "All credentials and tokens removed",
 		})
+	}
+	if outfmt.IsPlain(ctx) {
+		return outfmt.WritePlain(os.Stdout,
+			[]string{"STATUS", "MESSAGE"},
+			[][]string{{"success", "All credentials and tokens removed"}},
+		)
 	}
 
 	fmt.Fprintln(os.Stderr, "All credentials and tokens removed")

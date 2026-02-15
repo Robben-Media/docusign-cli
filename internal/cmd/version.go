@@ -26,6 +26,12 @@ func (cmd *VersionCmd) Run(ctx context.Context) error {
 			"os":      runtime.GOOS + "/" + runtime.GOARCH,
 		})
 	}
+	if outfmt.IsPlain(ctx) {
+		return outfmt.WritePlain(os.Stdout,
+			[]string{"VERSION", "COMMIT", "DATE", "OS"},
+			[][]string{{VersionString(), commit, date, runtime.GOOS + "/" + runtime.GOARCH}},
+		)
+	}
 	fmt.Printf("docusign-cli %s\n", VersionString())
 	fmt.Printf("  Commit: %s\n", commit)
 	fmt.Printf("  Built:  %s\n", date)

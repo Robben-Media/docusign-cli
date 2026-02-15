@@ -30,6 +30,14 @@ func (cmd *RecipientsListCmd) Run(ctx context.Context) error {
 	if outfmt.IsJSON(ctx) {
 		return outfmt.WriteJSON(os.Stdout, result)
 	}
+	if outfmt.IsPlain(ctx) {
+		headers := []string{"RECIPIENT_ID", "NAME", "EMAIL", "STATUS", "SIGNED_AT"}
+		var rows [][]string
+		for _, s := range result.Signers {
+			rows = append(rows, []string{s.RecipientID, s.Name, s.Email, s.Status, s.SignedAt})
+		}
+		return outfmt.WritePlain(os.Stdout, headers, rows)
+	}
 
 	if len(result.Signers) == 0 {
 		fmt.Fprintln(os.Stderr, "No signers found")

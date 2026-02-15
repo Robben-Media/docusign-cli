@@ -64,6 +64,17 @@ func WriteJSON(w io.Writer, v any) error {
 	return nil
 }
 
+// WritePlain writes tab-separated values to the writer.
+func WritePlain(w io.Writer, headers []string, rows [][]string) error {
+	if len(headers) > 0 {
+		fmt.Fprintln(w, strings.Join(headers, "\t"))
+	}
+	for _, row := range rows {
+		fmt.Fprintln(w, strings.Join(row, "\t"))
+	}
+	return nil
+}
+
 func KeyValuePayload(key string, value any) map[string]any {
 	return map[string]any{
 		"key":   key,
