@@ -322,7 +322,7 @@ func printTokenStatus(hasTokens bool, tokens *docusign.TokenData, status map[str
 			fmt.Fprintf(os.Stdout, "Access Token:    %s\n", redacted)
 		}
 	} else {
-		fmt.Fprintln(os.Stderr, "Tokens:          Not found (run: docusign-cli auth login)")
+		fmt.Fprintln(os.Stdout, "Tokens:          Not found (run: docusign-cli auth login)")
 	}
 }
 
