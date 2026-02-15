@@ -1,6 +1,6 @@
-module github.com/builtbyrobben/cli-template
+module github.com/builtbyrobben/docusign-cli
 
-go 1.22.0
+go 1.25
 
 require (
 	github.com/99designs/keyring v1.2.2

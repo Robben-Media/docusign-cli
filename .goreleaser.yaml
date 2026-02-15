@@ -1,19 +1,19 @@
 version: 2
 
-project_name: placeholder-cli
+project_name: docusign-cli
 
 changelog:
   disable: true
 
 builds:
-  - id: placeholder
-    main: ./cmd/placeholder
-    binary: placeholder-cli
+  - id: docusign
+    main: ./cmd/docusign
+    binary: docusign-cli
     ldflags: >-
       -s -w
-      -X github.com/builtbyrobben/cli-template/internal/cmd.version={{ .Tag }}
-      -X github.com/builtbyrobben/cli-template/internal/cmd.commit={{ .ShortCommit }}
-      -X github.com/builtbyrobben/cli-template/internal/cmd.date={{ .Date }}
+      -X github.com/builtbyrobben/docusign-cli/internal/cmd.version={{ .Tag }}
+      -X github.com/builtbyrobben/docusign-cli/internal/cmd.commit={{ .ShortCommit }}
+      -X github.com/builtbyrobben/docusign-cli/internal/cmd.date={{ .Date }}
     env:
       - CGO_ENABLED=0
     targets:
@@ -21,14 +21,14 @@ builds:
       - linux_arm64
       - windows_amd64
       - windows_arm64
-  - id: placeholder_darwin
-    main: ./cmd/placeholder
-    binary: placeholder-cli
+  - id: docusign_darwin
+    main: ./cmd/docusign
+    binary: docusign-cli
     ldflags: >-
       -s -w
-      -X github.com/builtbyrobben/cli-template/internal/cmd.version={{ .Tag }}
-      -X github.com/builtbyrobben/cli-template/internal/cmd.commit={{ .ShortCommit }}
-      -X github.com/builtbyrobben/cli-template/internal/cmd.date={{ .Date }}
+      -X github.com/builtbyrobben/docusign-cli/internal/cmd.version={{ .Tag }}
+      -X github.com/builtbyrobben/docusign-cli/internal/cmd.commit={{ .ShortCommit }}
+      -X github.com/builtbyrobben/docusign-cli/internal/cmd.date={{ .Date }}
     env:
       - CGO_ENABLED=1
     targets:
@@ -37,8 +37,8 @@ builds:
 
 archives:
   - builds:
-      - placeholder
-      - placeholder_darwin
+      - docusign
+      - docusign_darwin
     format: tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:
@@ -47,3 +47,13 @@ archives:
 
 checksum:
   name_template: checksums.txt
+
+brews:
+  - repository:
+      owner: builtbyrobben
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    folder: Formula
+    homepage: "https://github.com/builtbyrobben/docusign-cli"
+    description: "DocuSign eSignature CLI"
+    license: "MIT"

@@ -132,4 +132,4 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/builtbyrobben/cli-template
+        - github.com/builtbyrobben/docusign-cli
