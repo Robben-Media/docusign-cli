@@ -3,7 +3,10 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"runtime"
+
+	"github.com/builtbyrobben/docusign-cli/internal/outfmt"
 )
 
 var (
@@ -14,7 +17,15 @@ var (
 
 type VersionCmd struct{}
 
-func (cmd *VersionCmd) Run(_ context.Context) error {
+func (cmd *VersionCmd) Run(ctx context.Context) error {
+	if outfmt.IsJSON(ctx) {
+		return outfmt.WriteJSON(os.Stdout, map[string]string{
+			"version": VersionString(),
+			"commit":  commit,
+			"date":    date,
+			"os":      runtime.GOOS + "/" + runtime.GOARCH,
+		})
+	}
 	fmt.Printf("docusign-cli %s\n", VersionString())
 	fmt.Printf("  Commit: %s\n", commit)
 	fmt.Printf("  Built:  %s\n", date)
