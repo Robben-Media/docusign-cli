@@ -171,6 +171,10 @@ func (cmd *AuthSetCredentialsCmd) Run(ctx context.Context) error {
 	}
 
 	if secretKey == "" {
+		if !term.IsTerminal(int(os.Stdin.Fd())) {
+			return fmt.Errorf("secret key cannot be empty (pipe both values as two lines: integration-key\\nsecret-key)")
+		}
+
 		return fmt.Errorf("secret key cannot be empty")
 	}
 

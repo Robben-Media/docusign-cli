@@ -115,6 +115,16 @@ func (cmd *EnvelopesCreateCmd) Run(ctx context.Context) error {
 		return err
 	}
 
+	// Check file size before reading (DocuSign limit is 25MB)
+	const maxDocSize = 25 * 1024 * 1024
+	fi, err := os.Stat(cmd.Document)
+	if err != nil {
+		return fmt.Errorf("stat document file: %w", err)
+	}
+	if fi.Size() > maxDocSize {
+		return fmt.Errorf("document file is %d bytes, exceeds DocuSign 25MB limit", fi.Size())
+	}
+
 	docBytes, err := os.ReadFile(cmd.Document)
 	if err != nil {
 		return fmt.Errorf("read document file: %w", err)

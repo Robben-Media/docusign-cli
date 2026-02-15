@@ -413,7 +413,7 @@ func (c *Client) GetEnvelope(ctx context.Context, envelopeID string) (*EnvelopeD
 		return nil, errEnvelopeIDRequired
 	}
 
-	path := fmt.Sprintf("/envelopes/%s", envelopeID)
+	path := fmt.Sprintf("/envelopes/%s", url.PathEscape(envelopeID))
 
 	var result EnvelopeDetail
 	if err := c.Get(ctx, path, &result); err != nil {
@@ -437,7 +437,7 @@ func (c *Client) SendEnvelope(ctx context.Context, envelopeID string) error {
 		return errEnvelopeIDRequired
 	}
 
-	path := fmt.Sprintf("/envelopes/%s", envelopeID)
+	path := fmt.Sprintf("/envelopes/%s", url.PathEscape(envelopeID))
 	body := map[string]string{"status": "sent"}
 
 	var result map[string]any
@@ -457,7 +457,7 @@ func (c *Client) VoidEnvelope(ctx context.Context, envelopeID, reason string) er
 		return errVoidReasonReq
 	}
 
-	path := fmt.Sprintf("/envelopes/%s", envelopeID)
+	path := fmt.Sprintf("/envelopes/%s", url.PathEscape(envelopeID))
 	body := map[string]string{
 		"status":        "voided",
 		"voided_reason": reason,
@@ -476,7 +476,7 @@ func (c *Client) GetAuditEvents(ctx context.Context, envelopeID string) (*AuditE
 		return nil, errEnvelopeIDRequired
 	}
 
-	path := fmt.Sprintf("/envelopes/%s/audit_events", envelopeID)
+	path := fmt.Sprintf("/envelopes/%s/audit_events", url.PathEscape(envelopeID))
 
 	var result AuditEventsResponse
 	if err := c.Get(ctx, path, &result); err != nil {
@@ -493,7 +493,7 @@ func (c *Client) ListDocuments(ctx context.Context, envelopeID string) (*Documen
 		return nil, errEnvelopeIDRequired
 	}
 
-	path := fmt.Sprintf("/envelopes/%s/documents", envelopeID)
+	path := fmt.Sprintf("/envelopes/%s/documents", url.PathEscape(envelopeID))
 
 	var result DocumentsListResponse
 	if err := c.Get(ctx, path, &result); err != nil {
@@ -512,7 +512,7 @@ func (c *Client) DownloadDocument(ctx context.Context, envelopeID, documentID st
 		return nil, errDocumentIDRequired
 	}
 
-	path := fmt.Sprintf("/envelopes/%s/documents/%s", envelopeID, documentID)
+	path := fmt.Sprintf("/envelopes/%s/documents/%s", url.PathEscape(envelopeID), url.PathEscape(documentID))
 
 	resp, err := c.Do(ctx, api.Request{Method: http.MethodGet, Path: path})
 	if err != nil {
@@ -541,7 +541,7 @@ func (c *Client) ListRecipients(ctx context.Context, envelopeID string) (*Recipi
 		return nil, errEnvelopeIDRequired
 	}
 
-	path := fmt.Sprintf("/envelopes/%s/recipients", envelopeID)
+	path := fmt.Sprintf("/envelopes/%s/recipients", url.PathEscape(envelopeID))
 
 	var result RecipientsListResponse
 	if err := c.Get(ctx, path, &result); err != nil {
@@ -582,7 +582,7 @@ func (c *Client) GetTemplate(ctx context.Context, templateID string) (*Template,
 		return nil, errTemplateIDRequired
 	}
 
-	path := fmt.Sprintf("/templates/%s", templateID)
+	path := fmt.Sprintf("/templates/%s", url.PathEscape(templateID))
 
 	var result Template
 	if err := c.Get(ctx, path, &result); err != nil {
@@ -599,7 +599,7 @@ func (c *Client) CreateRecipientView(ctx context.Context, envelopeID string, req
 		return nil, errEnvelopeIDRequired
 	}
 
-	path := fmt.Sprintf("/envelopes/%s/views/recipient", envelopeID)
+	path := fmt.Sprintf("/envelopes/%s/views/recipient", url.PathEscape(envelopeID))
 
 	var result ViewURL
 	if err := c.Post(ctx, path, req, &result); err != nil {
