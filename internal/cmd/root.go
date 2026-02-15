@@ -74,7 +74,7 @@ func Execute(args []string) (err error) {
 
 	mode, err := outfmt.FromFlags(cli.JSON, cli.Plain)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, errfmt.Format(err))
+		_, _ = fmt.Fprintln(os.Stderr, errfmt.Format(err))
 		return newUsageError(err)
 	}
 
