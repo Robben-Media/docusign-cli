@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"runtime"
@@ -20,7 +19,7 @@ type VersionCmd struct{}
 
 func (cmd *VersionCmd) Run(ctx context.Context) error {
 	if outfmt.IsJSON(ctx) {
-		return json.NewEncoder(os.Stdout).Encode(map[string]string{
+		return outfmt.WriteJSON(os.Stdout, map[string]string{
 			"version": VersionString(),
 			"commit":  commit,
 			"date":    date,
