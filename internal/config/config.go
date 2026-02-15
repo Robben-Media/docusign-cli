@@ -9,11 +9,9 @@ import (
 	"strings"
 )
 
-const AppName = "placeholder-cli"
+const AppName = "docusign-cli"
 
-var (
-	ErrConfigDir = errors.New("config directory error")
-)
+var ErrConfigDir = errors.New("config directory error")
 
 // ConfigDir returns the platform-specific config directory.
 // macOS: ~/Library/Application Support/{cli}/
@@ -57,7 +55,7 @@ func EnsureConfigDir() (string, error) {
 		return "", err
 	}
 
-	if err := os.MkdirAll(configDir, 0700); err != nil {
+	if err := os.MkdirAll(configDir, 0o700); err != nil {
 		return "", fmt.Errorf("%w: create config directory: %w", ErrConfigDir, err)
 	}
 
@@ -74,7 +72,7 @@ func EnsureKeyringDir() (string, error) {
 
 	keyringDir := filepath.Join(configDir, "keyring")
 
-	if err := os.MkdirAll(keyringDir, 0700); err != nil {
+	if err := os.MkdirAll(keyringDir, 0o700); err != nil {
 		return "", fmt.Errorf("%w: create keyring directory: %w", ErrConfigDir, err)
 	}
 
@@ -87,6 +85,7 @@ func ConfigPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return filepath.Join(configDir, "config.json"), nil
 }
 
