@@ -57,3 +57,5 @@ brews:
     homepage: "https://github.com/builtbyrobben/docusign-cli"
     description: "DocuSign eSignature CLI"
     license: "MIT"
+    test: |
+      system "#{bin}/docusign-cli", "--version"
