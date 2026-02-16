@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/builtbyrobben/docusign-cli/internal/api"
@@ -445,11 +446,11 @@ func TestBuildAuthURL(t *testing.T) {
 		t.Fatal("expected non-empty auth URL")
 	}
 
-	if !contains(authURL, "test-integration-key") {
+	if !strings.Contains(authURL, "test-integration-key") {
 		t.Errorf("expected URL to contain integration key, got %s", authURL)
 	}
 
-	if !contains(authURL, "response_type=code") {
+	if !strings.Contains(authURL, "response_type=code") {
 		t.Errorf("expected URL to contain response_type=code, got %s", authURL)
 	}
 }
@@ -505,16 +506,9 @@ func TestFindDefaultAccount_NoAccounts(t *testing.T) {
 	}
 }
 
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsStr(s, substr))
-}
-
-func containsStr(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
+func TestFindDefaultAccount_NilInfo(t *testing.T) {
+	_, err := FindDefaultAccount(nil)
+	if err == nil {
+		t.Fatal("expected error for nil userinfo")
 	}
-
-	return false
 }
