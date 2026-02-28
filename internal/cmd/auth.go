@@ -104,6 +104,12 @@ func (cmd *AuthLoginCmd) Run(ctx context.Context) error {
 			"base_uri":   account.BaseURI,
 		})
 	}
+	if outfmt.IsPlain(ctx) {
+		return outfmt.WritePlain(os.Stdout,
+			[]string{"STATUS", "ACCOUNT_ID", "BASE_URI"},
+			[][]string{{"success", account.AccountID, account.BaseURI}},
+		)
+	}
 
 	fmt.Fprintln(os.Stderr, "Login successful!")
 	fmt.Fprintf(os.Stderr, "Account ID: %s\n", account.AccountID)
@@ -192,6 +198,12 @@ func (cmd *AuthSetCredentialsCmd) Run(ctx context.Context) error {
 			"message": "Credentials stored in keyring",
 		})
 	}
+	if outfmt.IsPlain(ctx) {
+		return outfmt.WritePlain(os.Stdout,
+			[]string{"STATUS", "MESSAGE"},
+			[][]string{{"success", "Credentials stored in keyring"}},
+		)
+	}
 
 	fmt.Fprintln(os.Stderr, "Credentials stored in keyring")
 
@@ -207,6 +219,7 @@ func (cmd *AuthStatusCmd) Run(ctx context.Context) error {
 
 	envIK := os.Getenv("DOCUSIGN_INTEGRATION_KEY") != ""
 	envSK := os.Getenv("DOCUSIGN_SECRET_KEY") != ""
+	envAcct := os.Getenv("DOCUSIGN_ACCOUNT_ID") != ""
 
 	tokens, tokenErr := docusign.ReadTokens()
 	hasTokens := tokenErr == nil
@@ -214,13 +227,16 @@ func (cmd *AuthStatusCmd) Run(ctx context.Context) error {
 	status := map[string]any{
 		"has_integration_key": hasIK || envIK,
 		"has_secret_key":      hasSK || envSK,
-		"has_account_id":      hasAcct,
+		"has_account_id":      hasAcct || envAcct,
 		"has_tokens":          hasTokens,
 		"env_integration_key": envIK,
 		"env_secret_key":      envSK,
+		"env_account_id":      envAcct,
 	}
 
-	if hasAcct {
+	if envAcct {
+		status["account_id"] = os.Getenv("DOCUSIGN_ACCOUNT_ID")
+	} else if hasAcct {
 		acctID, acctErr := secrets.GetSecret(accountIDKeyName)
 		if acctErr == nil {
 			status["account_id"] = string(acctID)
@@ -238,19 +254,40 @@ func (cmd *AuthStatusCmd) Run(ctx context.Context) error {
 	if outfmt.IsJSON(ctx) {
 		return outfmt.WriteJSON(os.Stdout, status)
 	}
+	if outfmt.IsPlain(ctx) {
+		acctID := ""
+		if v, ok := status["account_id"].(string); ok {
+			acctID = v
+		}
+		tokenStatus := "none"
+		if hasTokens {
+			if tokens.IsExpired() {
+				tokenStatus = "expired"
+			} else {
+				tokenStatus = "valid"
+			}
+		}
+		return outfmt.WritePlain(os.Stdout,
+			[]string{"HAS_INTEGRATION_KEY", "HAS_SECRET_KEY", "ACCOUNT_ID", "TOKENS"},
+			[][]string{{fmt.Sprintf("%v", hasIK || envIK), fmt.Sprintf("%v", hasSK || envSK), acctID, tokenStatus}},
+		)
+	}
 
-	fmt.Fprintln(os.Stderr, "DocuSign CLI Auth Status")
-	fmt.Fprintln(os.Stderr, "------------------------")
+	fmt.Fprintln(os.Stdout, "DocuSign CLI Auth Status")
+	fmt.Fprintln(os.Stdout, "------------------------")
 
 	printIntegrationKeyStatus(envIK, hasIK)
 	printSecretKeyStatus(envSK, hasSK)
 
-	if hasAcct {
+	switch {
+	case envAcct:
+		fmt.Fprintf(os.Stdout, "Account ID:      %s (env)\n", os.Getenv("DOCUSIGN_ACCOUNT_ID"))
+	case hasAcct:
 		if acctID, ok := status["account_id"].(string); ok {
-			fmt.Fprintf(os.Stderr, "Account ID:      %s\n", acctID)
+			fmt.Fprintf(os.Stdout, "Account ID:      %s\n", acctID)
 		}
-	} else {
-		fmt.Fprintln(os.Stderr, "Account ID:      Not set")
+	default:
+		fmt.Fprintln(os.Stdout, "Account ID:      Not set")
 	}
 
 	printTokenStatus(hasTokens, tokens, status)
@@ -261,55 +298,81 @@ func (cmd *AuthStatusCmd) Run(ctx context.Context) error {
 func printIntegrationKeyStatus(envIK, hasIK bool) {
 	switch {
 	case envIK:
-		fmt.Fprintln(os.Stderr, "Integration Key: Set via DOCUSIGN_INTEGRATION_KEY")
+		fmt.Fprintln(os.Stdout, "Integration Key: Set via DOCUSIGN_INTEGRATION_KEY")
 	case hasIK:
-		fmt.Fprintln(os.Stderr, "Integration Key: Stored in keyring")
+		fmt.Fprintln(os.Stdout, "Integration Key: Stored in keyring")
 	default:
-		fmt.Fprintln(os.Stderr, "Integration Key: Not set")
+		fmt.Fprintln(os.Stdout, "Integration Key: Not set")
 	}
 }
 
 func printSecretKeyStatus(envSK, hasSK bool) {
 	switch {
 	case envSK:
-		fmt.Fprintln(os.Stderr, "Secret Key:      Set via DOCUSIGN_SECRET_KEY")
+		fmt.Fprintln(os.Stdout, "Secret Key:      Set via DOCUSIGN_SECRET_KEY")
 	case hasSK:
-		fmt.Fprintln(os.Stderr, "Secret Key:      Stored in keyring")
+		fmt.Fprintln(os.Stdout, "Secret Key:      Stored in keyring")
 	default:
-		fmt.Fprintln(os.Stderr, "Secret Key:      Not set")
+		fmt.Fprintln(os.Stdout, "Secret Key:      Not set")
 	}
 }
 
 func printTokenStatus(hasTokens bool, tokens *docusign.TokenData, status map[string]any) {
 	if hasTokens {
 		if tokens.IsExpired() {
-			fmt.Fprintln(os.Stderr, "Tokens:          Expired (will auto-refresh)")
+			fmt.Fprintln(os.Stdout, "Tokens:          Expired (will auto-refresh)")
 		} else {
-			fmt.Fprintln(os.Stderr, "Tokens:          Valid")
+			fmt.Fprintln(os.Stdout, "Tokens:          Valid")
 		}
 
 		if redacted, ok := status["access_token_redacted"].(string); ok {
-			fmt.Fprintf(os.Stderr, "Access Token:    %s\n", redacted)
+			fmt.Fprintf(os.Stdout, "Access Token:    %s\n", redacted)
 		}
 	} else {
-		fmt.Fprintln(os.Stderr, "Tokens:          Not found (run: docusign-cli auth login)")
+		fmt.Fprintln(os.Stdout, "Tokens:          Not found (run: docusign-cli auth login)")
 	}
 }
 
 type AuthRemoveCmd struct{}
 
 func (cmd *AuthRemoveCmd) Run(ctx context.Context) error {
-	_ = secrets.DeleteSecret(integrationKeyName)
-	_ = secrets.DeleteSecret(secretKeyName)
-	_ = secrets.DeleteSecret(accountIDKeyName)
-	_ = secrets.DeleteSecret(baseURIKeyName)
-	_ = docusign.RemoveTokens()
+	var errs []string
+
+	if err := secrets.DeleteSecret(integrationKeyName); err != nil {
+		errs = append(errs, fmt.Sprintf("remove integration key: %v", err))
+	}
+
+	if err := secrets.DeleteSecret(secretKeyName); err != nil {
+		errs = append(errs, fmt.Sprintf("remove secret key: %v", err))
+	}
+
+	if err := secrets.DeleteSecret(accountIDKeyName); err != nil {
+		errs = append(errs, fmt.Sprintf("remove account ID: %v", err))
+	}
+
+	if err := secrets.DeleteSecret(baseURIKeyName); err != nil {
+		errs = append(errs, fmt.Sprintf("remove base URI: %v", err))
+	}
+
+	if err := docusign.RemoveTokens(); err != nil {
+		errs = append(errs, fmt.Sprintf("remove tokens: %v", err))
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("partial cleanup: %s", strings.Join(errs, "; "))
+	}
 
 	if outfmt.IsJSON(ctx) {
 		return outfmt.WriteJSON(os.Stdout, map[string]string{
 			"status":  "success",
 			"message": "All credentials and tokens removed",
 		})
+	}
+	if outfmt.IsPlain(ctx) {
+		return outfmt.WritePlain(os.Stdout,
+			[]string{"STATUS", "MESSAGE"},
+			[][]string{{"success", "All credentials and tokens removed"}},
+		)
 	}
 
 	fmt.Fprintln(os.Stderr, "All credentials and tokens removed")
@@ -375,15 +438,23 @@ func getDocuSignClient(ctx context.Context) (*docusign.Client, error) {
 		fmt.Fprintln(os.Stderr, "Token refreshed")
 	}
 
-	accountIDBytes, err := secrets.GetSecret(accountIDKeyName)
-	if err != nil {
-		return nil, fmt.Errorf("get account ID: %w (run 'docusign-cli auth login' first)", err)
+	accountID := os.Getenv("DOCUSIGN_ACCOUNT_ID")
+	if accountID == "" {
+		accountIDBytes, err := secrets.GetSecret(accountIDKeyName)
+		if err != nil {
+			return nil, fmt.Errorf("get account ID: %w (run 'docusign-cli auth login' first)", err)
+		}
+		accountID = string(accountIDBytes)
 	}
 
-	baseURIBytes, err := secrets.GetSecret(baseURIKeyName)
-	if err != nil {
-		return nil, fmt.Errorf("get base URI: %w (run 'docusign-cli auth login' first)", err)
+	baseURI := os.Getenv("DOCUSIGN_BASE_URI")
+	if baseURI == "" {
+		baseURIBytes, err := secrets.GetSecret(baseURIKeyName)
+		if err != nil {
+			return nil, fmt.Errorf("get base URI: %w (run 'docusign-cli auth login' first)", err)
+		}
+		baseURI = string(baseURIBytes)
 	}
 
-	return docusign.NewClient(string(baseURIBytes), string(accountIDBytes), tokens.AccessToken), nil
+	return docusign.NewClient(baseURI, accountID, tokens.AccessToken), nil
 }

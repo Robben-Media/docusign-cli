@@ -31,6 +31,14 @@ func (cmd *DocumentsListCmd) Run(ctx context.Context) error {
 	if outfmt.IsJSON(ctx) {
 		return outfmt.WriteJSON(os.Stdout, result)
 	}
+	if outfmt.IsPlain(ctx) {
+		headers := []string{"DOCUMENT_ID", "NAME", "TYPE", "PAGES"}
+		var rows [][]string
+		for _, doc := range result.EnvelopeDocuments {
+			rows = append(rows, []string{doc.DocumentID, doc.Name, doc.Type, doc.Pages})
+		}
+		return outfmt.WritePlain(os.Stdout, headers, rows)
+	}
 
 	if len(result.EnvelopeDocuments) == 0 {
 		fmt.Fprintln(os.Stderr, "No documents found")

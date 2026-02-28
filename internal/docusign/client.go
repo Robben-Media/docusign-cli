@@ -226,6 +226,10 @@ func GetUserinfo(ctx context.Context, accessToken string) (*UserinfoResponse, er
 
 // FindDefaultAccount finds the default account from userinfo response.
 func FindDefaultAccount(info *UserinfoResponse) (*UserinfoAccount, error) {
+	if info == nil {
+		return nil, errNoAccountFound
+	}
+
 	for i := range info.Accounts {
 		if info.Accounts[i].IsDefault {
 			return &info.Accounts[i], nil

@@ -40,6 +40,14 @@ func (cmd *EnvelopesListCmd) Run(ctx context.Context) error {
 	if outfmt.IsJSON(ctx) {
 		return outfmt.WriteJSON(os.Stdout, result)
 	}
+	if outfmt.IsPlain(ctx) {
+		headers := []string{"ID", "SUBJECT", "STATUS", "SENT"}
+		var rows [][]string
+		for _, env := range result.Envelopes {
+			rows = append(rows, []string{env.EnvelopeID, env.EmailSubject, env.Status, env.SentDateTime})
+		}
+		return outfmt.WritePlain(os.Stdout, headers, rows)
+	}
 
 	if len(result.Envelopes) == 0 {
 		fmt.Fprintln(os.Stderr, "No envelopes found")
@@ -80,6 +88,12 @@ func (cmd *EnvelopesGetCmd) Run(ctx context.Context) error {
 
 	if outfmt.IsJSON(ctx) {
 		return outfmt.WriteJSON(os.Stdout, result)
+	}
+	if outfmt.IsPlain(ctx) {
+		return outfmt.WritePlain(os.Stdout,
+			[]string{"ID", "SUBJECT", "STATUS", "CREATED", "SENT"},
+			[][]string{{result.EnvelopeID, result.EmailSubject, result.Status, result.CreatedAt, result.SentDateTime}},
+		)
 	}
 
 	fmt.Printf("ID:      %s\n", result.EnvelopeID)
@@ -167,6 +181,12 @@ func (cmd *EnvelopesCreateCmd) Run(ctx context.Context) error {
 	if outfmt.IsJSON(ctx) {
 		return outfmt.WriteJSON(os.Stdout, result)
 	}
+	if outfmt.IsPlain(ctx) {
+		return outfmt.WritePlain(os.Stdout,
+			[]string{"ID", "STATUS"},
+			[][]string{{result.EnvelopeID, result.Status}},
+		)
+	}
 
 	fmt.Fprintf(os.Stderr, "Envelope created\n\n")
 	fmt.Printf("ID:     %s\n", result.EnvelopeID)
@@ -195,6 +215,12 @@ func (cmd *EnvelopesSendCmd) Run(ctx context.Context) error {
 			"envelope_id": cmd.ID,
 		})
 	}
+	if outfmt.IsPlain(ctx) {
+		return outfmt.WritePlain(os.Stdout,
+			[]string{"STATUS", "ENVELOPE_ID"},
+			[][]string{{"success", cmd.ID}},
+		)
+	}
 
 	fmt.Fprintf(os.Stderr, "Envelope %s sent\n", cmd.ID)
 
@@ -222,6 +248,12 @@ func (cmd *EnvelopesVoidCmd) Run(ctx context.Context) error {
 			"envelope_id": cmd.ID,
 		})
 	}
+	if outfmt.IsPlain(ctx) {
+		return outfmt.WritePlain(os.Stdout,
+			[]string{"STATUS", "ENVELOPE_ID"},
+			[][]string{{"success", cmd.ID}},
+		)
+	}
 
 	fmt.Fprintf(os.Stderr, "Envelope %s voided\n", cmd.ID)
 
@@ -245,6 +277,16 @@ func (cmd *EnvelopesAuditCmd) Run(ctx context.Context) error {
 
 	if outfmt.IsJSON(ctx) {
 		return outfmt.WriteJSON(os.Stdout, result)
+	}
+	if outfmt.IsPlain(ctx) {
+		headers := []string{"EVENT", "FIELD", "VALUE"}
+		var rows [][]string
+		for i, event := range result.AuditEvents {
+			for _, field := range event.EventFields {
+				rows = append(rows, []string{fmt.Sprintf("%d", i+1), field.Name, field.Value})
+			}
+		}
+		return outfmt.WritePlain(os.Stdout, headers, rows)
 	}
 
 	if len(result.AuditEvents) == 0 {

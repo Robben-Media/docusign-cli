@@ -43,6 +43,12 @@ func (cmd *ViewsSigningCmd) Run(ctx context.Context) error {
 	if outfmt.IsJSON(ctx) {
 		return outfmt.WriteJSON(os.Stdout, result)
 	}
+	if outfmt.IsPlain(ctx) {
+		return outfmt.WritePlain(os.Stdout,
+			[]string{"URL"},
+			[][]string{{result.URL}},
+		)
+	}
 
 	fmt.Printf("%s\n", result.URL)
 

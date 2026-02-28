@@ -32,6 +32,14 @@ func (cmd *TemplatesListCmd) Run(ctx context.Context) error {
 	if outfmt.IsJSON(ctx) {
 		return outfmt.WriteJSON(os.Stdout, result)
 	}
+	if outfmt.IsPlain(ctx) {
+		headers := []string{"ID", "NAME", "DESCRIPTION", "MODIFIED"}
+		var rows [][]string
+		for _, tmpl := range result.EnvelopeTemplates {
+			rows = append(rows, []string{tmpl.TemplateID, tmpl.Name, tmpl.Description, tmpl.LastModified})
+		}
+		return outfmt.WritePlain(os.Stdout, headers, rows)
+	}
 
 	if len(result.EnvelopeTemplates) == 0 {
 		fmt.Fprintln(os.Stderr, "No templates found")
@@ -75,6 +83,12 @@ func (cmd *TemplatesGetCmd) Run(ctx context.Context) error {
 
 	if outfmt.IsJSON(ctx) {
 		return outfmt.WriteJSON(os.Stdout, result)
+	}
+	if outfmt.IsPlain(ctx) {
+		return outfmt.WritePlain(os.Stdout,
+			[]string{"ID", "NAME", "DESCRIPTION", "CREATED", "MODIFIED"},
+			[][]string{{result.TemplateID, result.Name, result.Description, result.Created, result.LastModified}},
+		)
 	}
 
 	fmt.Printf("ID:   %s\n", result.TemplateID)
