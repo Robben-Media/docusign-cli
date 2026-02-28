@@ -336,24 +336,30 @@ func printTokenStatus(hasTokens bool, tokens *docusign.TokenData, status map[str
 type AuthRemoveCmd struct{}
 
 func (cmd *AuthRemoveCmd) Run(ctx context.Context) error {
+	var errs []string
+
 	if err := secrets.DeleteSecret(integrationKeyName); err != nil {
-		return fmt.Errorf("remove integration key: %w", err)
+		errs = append(errs, fmt.Sprintf("remove integration key: %v", err))
 	}
 
 	if err := secrets.DeleteSecret(secretKeyName); err != nil {
-		return fmt.Errorf("remove secret key: %w", err)
+		errs = append(errs, fmt.Sprintf("remove secret key: %v", err))
 	}
 
 	if err := secrets.DeleteSecret(accountIDKeyName); err != nil {
-		return fmt.Errorf("remove account ID: %w", err)
+		errs = append(errs, fmt.Sprintf("remove account ID: %v", err))
 	}
 
 	if err := secrets.DeleteSecret(baseURIKeyName); err != nil {
-		return fmt.Errorf("remove base URI: %w", err)
+		errs = append(errs, fmt.Sprintf("remove base URI: %v", err))
 	}
 
 	if err := docusign.RemoveTokens(); err != nil {
-		return fmt.Errorf("remove tokens: %w", err)
+		errs = append(errs, fmt.Sprintf("remove tokens: %v", err))
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("partial cleanup: %s", strings.Join(errs, "; "))
 	}
 
 	if outfmt.IsJSON(ctx) {
