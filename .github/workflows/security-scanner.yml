@@ -1,0 +1,77 @@
+name: Security Scanner
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: security-scan
+  cancel-in-progress: true
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup droid CLI
+        run: |
+          curl -fsSL https://app.factory.ai/cli | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Security audit
+        env:
+          FACTORY_API_KEY: ${{ secrets.FACTORY_API_KEY }}
+        run: |
+          droid exec --auto medium "
+          Perform a comprehensive security audit:
+          1. Check package.json for known vulnerabilities
+          2. Update vulnerable dependencies to safe versions
+          3. Scan code for hardcoded secrets or API keys
+          4. Review authentication and authorization patterns
+          5. Check for SQL injection or XSS vulnerabilities
+          6. Generate security-report.md with all findings and fixes
+          DO NOT commit or push changes.
+          "
+
+      - name: Create issue if vulnerabilities found
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f security-report.md ] && grep -qi "vulnerability\|security\|risk" security-report.md; then
+            gh issue create \
+              --title "Security audit findings - $(date +%Y-%m-%d)" \
+              --body-file security-report.md \
+              --label "security,high-priority" \
+              --assignee "${{ github.repository_owner }}" || true
+          fi
+
+      - name: Create PR for fixes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+
+            BRANCH="security-fixes-$(date +%Y%m%d)"
+            git checkout -b "$BRANCH"
+            git add -A
+            git commit -m "fix: security updates and dependency patches
+
+            Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.github.com>"
+            git push origin "$BRANCH"
+
+            gh pr create \
+              --title "Security fixes - $(date +%Y-%m-%d)" \
+              --body-file security-report.md \
+              --label "security,dependencies" || true
+          fi
