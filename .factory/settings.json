@@ -1,0 +1,21 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$DROID_PROJECT_DIR\"/.factory/hooks/validate-commit-msg.sh",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "\"$DROID_PROJECT_DIR\"/.factory/hooks/protect-branches.sh",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
+  }
+}
