@@ -1,0 +1,36 @@
+{
+  "type": "code",
+  "securityScan": {
+    "enabled": true,
+    "schedule": "0 9 * * 1"
+  },
+  "docsAutomation": {
+    "enabled": false,
+    "schedule": "0 3 * * 1",
+    "triggerPaths": [
+      "src/**/*.ts",
+      "src/**/*.tsx",
+      "src/**/*.js",
+      "src/**/*.jsx",
+      "src/**/*.php",
+      "src/**/*.astro"
+    ]
+  },
+  "issueToPR": {
+    "enabled": false,
+    "triggerLabel": "ready-for-droid",
+    "requireAcceptanceCriteria": true,
+    "baseBranch": "main"
+  },
+  "testingAutomation": {
+    "enabled": false,
+    "testCommand": "bun test",
+    "coverageThreshold": 0
+  },
+  "gitHooks": {
+    "enforceConventionalCommits": true,
+    "protectBranches": true,
+    "enforceBranchNaming": false,
+    "autoChangelog": false
+  }
+}
