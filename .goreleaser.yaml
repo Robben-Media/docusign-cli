@@ -36,14 +36,14 @@ builds:
       - darwin_arm64
 
 archives:
-  - builds:
+  - ids:
       - docusign
       - docusign_darwin
-    format: tar.gz
+    formats: ["tar.gz"]
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:
       - goos: windows
-        format: zip
+        formats: ["zip"]
 
 checksum:
   name_template: checksums.txt
@@ -53,7 +53,6 @@ brews:
       owner: builtbyrobben
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    folder: Formula
     homepage: "https://github.com/builtbyrobben/docusign-cli"
     description: "DocuSign eSignature CLI"
     license: "MIT"
