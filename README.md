@@ -4,13 +4,6 @@ A CLI tool for the [DocuSign eSignature API](https://developers.docusign.com/) b
 
 ## Installation
 
-### Homebrew (macOS/Linux)
-
-```bash
-brew tap builtbyrobben/tap
-brew install docusign-cli
-```
-
 ### Download Binary
 
 Download the latest release from [GitHub Releases](https://github.com/builtbyrobben/docusign-cli/releases).
