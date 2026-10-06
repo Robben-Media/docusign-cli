@@ -73,6 +73,7 @@ func WritePlain(w io.Writer, headers []string, rows [][]string) error {
 		for i, h := range headers {
 			cleanedHeaders[i] = replacer.Replace(h)
 		}
+
 		if _, err := fmt.Fprintln(w, strings.Join(cleanedHeaders, "\t")); err != nil {
 			return fmt.Errorf("write plain headers: %w", err)
 		}
